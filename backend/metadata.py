@@ -7,12 +7,12 @@ from mutagen.mp4 import MP4
 
 
 def derive_track_id(relative_path: str) -> str:
-    """Genera un identificador SHA-1 de 8 caracteres a partir de la ruta relativa."""
+    """Generate an 8-character ID from a file path."""
     return hashlib.sha1(relative_path.encode("utf-8")).hexdigest()[:8]
 
 
 def extract_track_metadata(file_path: str, base_dir: str) -> Dict[str, Any]:
-    """Extrae metadatos y detecta si tiene carátula incrustada."""
+    """Read song tags and check for album cover."""
     relative_path = os.path.relpath(file_path, base_dir)
     track_id = derive_track_id(relative_path)
     filename_stem = os.path.splitext(os.path.basename(file_path))[0]
@@ -31,7 +31,7 @@ def extract_track_metadata(file_path: str, base_dir: str) -> Dict[str, Any]:
 
             tags = audio.tags
             if tags:
-                # Lectura de tags para MP3
+                # Read MP3 tags
                 if hasattr(tags, "get"):
                     if "TIT2" in tags:
                         title = str(tags["TIT2"])
@@ -39,13 +39,13 @@ def extract_track_metadata(file_path: str, base_dir: str) -> Dict[str, Any]:
                         artist = str(tags["TPE1"])
                     if "TALB" in tags:
                         album = str(tags["TALB"])
-                    # Verificar si existe portada APIC
+                    # Check for cover art
                     for key in tags.keys():
                         if key.startswith("APIC"):
                             has_cover = True
                             break
 
-                # Lectura de tags para MP4 / M4A
+                # Read MP4 / M4A tags
                 if isinstance(tags, dict):
                     if "©nam" in tags and tags["©nam"]:
                         title = str(tags["©nam"][0])
@@ -57,7 +57,7 @@ def extract_track_metadata(file_path: str, base_dir: str) -> Dict[str, Any]:
                         has_cover = True
 
     except Exception as err:
-        print(f"[WARN] Error leyendo metadatos de {file_path}: {err}")
+        print(f"[WARN] Failed to read metadata for {file_path}: {err}")
 
     return {
         "id": track_id,
@@ -72,13 +72,13 @@ def extract_track_metadata(file_path: str, base_dir: str) -> Dict[str, Any]:
 
 
 def extract_cover_bytes(file_path: str) -> Optional[Tuple[bytes, str]]:
-    """Extrae los bytes binarios y el MIME type de la carátula incrustada."""
+    """Extract embedded cover image and its format."""
     try:
         audio = File(file_path)
         if audio is None or not audio.tags:
             return None
 
-        # MP3 ID3 APIC
+        # MP3 cover art
         if hasattr(audio.tags, "keys"):
             for key in audio.tags.keys():
                 if key.startswith("APIC"):
@@ -86,18 +86,18 @@ def extract_cover_bytes(file_path: str) -> Optional[Tuple[bytes, str]]:
                     mime = getattr(apic, "mime", "image/jpeg")
                     return apic.data, mime
 
-        # MP4 / M4A covr
+        # MP4 / M4A cover art
         if isinstance(audio.tags, dict) and "covr" in audio.tags:
             covr = audio.tags["covr"]
             if covr:
                 data = bytes(covr[0])
-                # Mutagen MP4Cover formats: 13=JPEG, 14=PNG
+                # Check image format (PNG vs JPEG)
                 imageformat = getattr(covr[0], "imageformat", None)
                 mime = "image/png" if imageformat == 14 else "image/jpeg"
                 return data, mime
 
     except Exception as err:
-        print(f"[WARN] Error extrayendo portada de {file_path}: {err}")
+        print(f"[WARN] Failed to extract cover art from {file_path}: {err}")
 
     return None
 
@@ -105,12 +105,12 @@ def extract_cover_bytes(file_path: str) -> Optional[Tuple[bytes, str]]:
 def scan_music_directory(
     music_dir: str,
 ) -> Tuple[List[Dict[str, Any]], Dict[str, str]]:
-    """Recorre recursivamente el directorio de música e indexa las canciones."""
+    """Scan the folder and index all supported audio files."""
     tracks: List[Dict[str, Any]] = []
     track_index: Dict[str, str] = {}
 
     if not os.path.isdir(music_dir):
-        print(f"[WARN] El directorio '{music_dir}' no existe.")
+        print(f"[WARN] Directory '{music_dir}' does not exist.")
         return tracks, track_index
 
     valid_extensions = {".mp3", ".mp4", ".m4a"}
