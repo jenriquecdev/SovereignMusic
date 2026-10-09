@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.pyc
+playlists.json
+liked.json
+history.json
+music/

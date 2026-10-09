@@ -1,0 +1,42 @@
+# Environment & Secrets
+.env
+.env.*
+!.env.example
+
+# Python & Virtual Environments
+.venv/
+env/
+venv/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+*.pytest_cache/
+
+# Audio Files & Media Library (Prevents copyright/DMCA issues)
+music/*
+!music/.gitkeep
+*.mp3
+*.flac
+*.m4a
+*.mp4
+*.wav
+*.aac
+*.ogg
+
+# User State & Runtime Data
+playlists.json
+liked.json
+history.json
+*.db
+*.sqlite3
+
+# Logs & Debugging
+*.log
+uvicorn.log
+
+# System & IDE Files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

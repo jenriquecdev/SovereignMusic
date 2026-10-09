@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  sovereign:
+    build: .
+    container_name: sovereign-music
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      # Monta tu carpeta local de música dentro del contenedor
+      - ./music:/app/music:ro
+    environment:
+      - MUSIC_DIR=/app/music
+      - PORT=8000
+      - HOST=0.0.0.0
